@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar - Dux Imports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .auth-card { background: white; border-radius: var(--radius-xl); padding: 2.5rem; max-width: 440px; width: 100%; box-shadow: var(--shadow-xl); }
+    .auth-logo { text-align: center; margin-bottom: 2rem; }
+    .auth-logo .brand { font-size: 1.6rem; font-weight: 900; color: var(--primary); }
+    .auth-logo .brand span { color: var(--gray-900); }
+    .auth-title { font-size: 1.4rem; font-weight: 800; text-align: center; margin-bottom: .5rem; }
+    .auth-subtitle { text-align: center; color: var(--gray-500); font-size: .88rem; margin-bottom: 2rem; }
+    .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--gray-400); font-size: .82rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+  </style>
+</head>
+<body>
+<div class="auth-card">
+  <div class="auth-logo">
+    <a href="/" class="brand">Dux <span>Imports</span></a>
+  </div>
+  <h2 class="auth-title">Bem-vindo de volta!</h2>
+  <p class="auth-subtitle">Faça login para acessar sua conta</p>
+
+  <div id="error-alert" class="alert alert-danger hidden"></div>
+
+  <form id="login-form" onsubmit="handleLogin(event)">
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input type="email" class="form-control" id="email" placeholder="seu@email.com" required autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;justify-content:space-between">
+        Senha
+        <a href="#" style="font-weight:500;color:var(--primary);font-size:.82rem">Esqueci a senha</a>
+      </label>
+      <div style="position:relative">
+        <input type="password" class="form-control" id="password" placeholder="Sua senha" required style="padding-right:2.5rem">
+        <button type="button" onclick="togglePassword()" style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--gray-400);cursor:pointer">
+          <i class="fas fa-eye" id="eye-icon"></i>
+        </button>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block" id="login-btn">
+      <i class="fas fa-sign-in-alt"></i> Entrar
+    </button>
+  </form>
+
+  <div class="divider">ou</div>
+
+  <p style="text-align:center;font-size:.88rem;color:var(--gray-600)">
+    Não tem conta?
+    <a href="/cadastro" style="color:var(--primary);font-weight:700">Criar conta grátis</a>
+  </p>
+
+  <p style="text-align:center;font-size:.78rem;color:var(--gray-400);margin-top:1.5rem">
+    <a href="/admin/login" style="color:var(--gray-400)">Acesso Administrativo</a>
+  </p>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+  // Redirecionar se já logado
+  if (auth.isLoggedIn()) window.location.href = '/conta';
+
+  function togglePassword() {
+    const input = document.getElementById('password');
+    const icon = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'fas fa-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'fas fa-eye';
+    }
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errorAlert = document.getElementById('error-alert');
+    errorAlert.classList.add('hidden');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner spinner-sm" style="border-color:rgba(255,255,255,.3);border-top-color:white;margin:0 auto"></div>';
+
+    try {
+      const data = await api.post('/auth/login', {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      });
+      auth.login(data.token, data.user);
+      toast.success(`Bem-vindo, ${data.user.name}!`);
+      const redirect = getQueryParam('redirect') || '/conta';
+      setTimeout(() => window.location.href = redirect, 500);
+    } catch (err) {
+      errorAlert.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${err.message}`;
+      errorAlert.classList.remove('hidden');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+    }
+  }
+</script>
+</body>
+</html>

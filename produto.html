@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produto - Dux Imports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .product-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+    .product-gallery { position: sticky; top: 90px; }
+    .main-image { background: var(--white); border-radius: var(--radius-xl); overflow: hidden; border: 1px solid var(--gray-200); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+    .main-image img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition-slow); }
+    .main-image img:hover { transform: scale(1.05); }
+    .product-info-section { background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--gray-200); padding: 2rem; }
+    .product-title { font-size: 1.6rem; font-weight: 800; margin-bottom: .5rem; }
+    .product-brand { color: var(--primary); font-weight: 600; font-size: .9rem; margin-bottom: 1rem; }
+    .price-section { padding: 1.25rem 0; border-top: 1px solid var(--gray-100); border-bottom: 1px solid var(--gray-100); margin: 1rem 0; }
+    .big-price { font-size: 2.2rem; font-weight: 900; color: var(--primary); }
+    .pix-price { color: var(--success); font-size: .9rem; font-weight: 600; margin-top: .25rem; }
+    .installment-price { color: var(--gray-500); font-size: .88rem; margin-top: .15rem; }
+    .stock-info { display: flex; align-items: center; gap: .5rem; font-size: .85rem; margin-bottom: 1rem; }
+    .stock-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .stock-ok { background: var(--success); }
+    .stock-low { background: var(--warning); }
+    .stock-out { background: var(--danger); }
+    .qty-section { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .product-features { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: 1.5rem; }
+    .feature-pill { display: flex; align-items: center; gap: .5rem; background: var(--gray-50); border-radius: var(--radius); padding: .6rem .9rem; font-size: .82rem; color: var(--gray-600); }
+    .feature-pill i { color: var(--primary); }
+    @media (max-width: 768px) {
+      .product-detail { grid-template-columns: 1fr; }
+      .product-gallery { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="navbar-brand">
+        <div class="brand-icon"><i class="fas fa-bolt"></i></div>
+        <span>Dux <em>Imports</em></span>
+      </a>
+      <div class="navbar-search">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="navbar-search" placeholder="Buscar produtos...">
+        <div class="search-results-dropdown" id="search-dropdown"></div>
+      </div>
+      <div class="navbar-actions">
+        <a href="/loja" class="nav-btn"><i class="fas fa-store"></i><span>Loja</span></a>
+        <div id="nav-login-btn"><a href="/login" class="nav-btn"><i class="fas fa-user"></i><span>Entrar</span></a></div>
+        <div id="nav-user-menu" class="hidden" style="position:relative;">
+          <button class="nav-btn" onclick="toggleUserDropdown()">
+            <i class="fas fa-user-circle"></i><span id="nav-user-name">Usuário</span>
+          </button>
+          <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.12);min-width:180px;z-index:100;overflow:hidden;">
+            <a href="/conta" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#334155"><i class="fas fa-user" style="color:#1a56db;width:16px"></i> Minha Conta</a>
+            <a href="/pedidos" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#334155"><i class="fas fa-box" style="color:#1a56db;width:16px"></i> Meus Pedidos</a>
+            <hr style="margin:0;border-color:#f1f5f9">
+            <button id="nav-logout-btn" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#ef4444;width:100%;border:none;background:none;cursor:pointer"><i class="fas fa-sign-out-alt" style="width:16px"></i> Sair</button>
+          </div>
+        </div>
+        <a href="/carrinho" class="nav-btn nav-btn-cart" style="position:relative">
+          <i class="fas fa-shopping-cart"></i><span>Carrinho</span>
+          <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── CONTEÚDO ─── -->
+<div class="container" style="padding-top:2rem;padding-bottom:4rem">
+  <div class="breadcrumb" id="breadcrumb">
+    <a href="/">Início</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/loja">Loja</a>
+    <span class="breadcrumb-sep">/</span>
+    <span id="breadcrumb-product">Carregando...</span>
+  </div>
+
+  <div id="product-loading" style="text-align:center;padding:4rem">
+    <div class="spinner" style="margin:0 auto"></div>
+    <p class="text-muted" style="margin-top:1rem">Carregando produto...</p>
+  </div>
+
+  <div id="product-content" class="hidden">
+    <div class="product-detail">
+      <!-- ─── GALERIA ─── -->
+      <div class="product-gallery">
+        <div class="main-image">
+          <img id="main-product-img" src="" alt="Produto">
+        </div>
+      </div>
+
+      <!-- ─── INFORMAÇÕES ─── -->
+      <div>
+        <div class="product-info-section">
+          <div class="product-brand" id="product-brand"></div>
+          <h1 class="product-title" id="product-name"></h1>
+
+          <div class="price-section">
+            <div>
+              <span id="product-original-price" style="color:var(--gray-400);text-decoration:line-through;font-size:.95rem;display:none"></span>
+              <span id="product-discount-badge" class="product-discount" style="display:none"></span>
+            </div>
+            <div class="big-price" id="product-price"></div>
+            <div class="pix-price" id="product-pix-price"></div>
+            <div class="installment-price" id="product-installment"></div>
+          </div>
+
+          <div class="stock-info">
+            <div class="stock-dot" id="stock-dot"></div>
+            <span id="stock-text"></span>
+          </div>
+
+          <div class="qty-section">
+            <div class="qty-control">
+              <button class="qty-btn" onclick="changeQty(-1)">−</button>
+              <span class="qty-value" id="qty-value">1</span>
+              <button class="qty-btn" onclick="changeQty(1)">+</button>
+            </div>
+            <button class="btn btn-primary btn-lg" id="add-to-cart-btn" onclick="addToCart()">
+              <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+            </button>
+          </div>
+
+          <a href="/checkout" class="btn btn-success btn-block" style="margin-bottom:1rem" onclick="buyNow()">
+            <i class="fas fa-bolt"></i> Comprar Agora
+          </a>
+
+          <div class="product-features">
+            <div class="feature-pill"><i class="fas fa-truck"></i> Frete grátis acima de R$299</div>
+            <div class="feature-pill"><i class="fas fa-shield-alt"></i> Garantia de 12 meses</div>
+            <div class="feature-pill"><i class="fas fa-undo"></i> 30 dias para troca</div>
+            <div class="feature-pill"><i class="fas fa-lock"></i> Pagamento seguro</div>
+          </div>
+        </div>
+
+        <!-- Formas de pagamento -->
+        <div class="card" style="margin-top:1rem">
+          <div class="card-body">
+            <h4 style="font-size:.9rem;margin-bottom:1rem">💳 Formas de Pagamento</h4>
+            <div style="display:flex;flex-direction:column;gap:.5rem">
+              <div style="display:flex;align-items:center;gap:.75rem;font-size:.85rem">
+                <span style="background:#00b4d8;color:white;padding:.2rem .5rem;border-radius:4px;font-weight:700;font-size:.75rem">PIX</span>
+                <span>5% de desconto no pagamento à vista</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:.75rem;font-size:.85rem">
+                <span style="background:#1a56db;color:white;padding:.2rem .5rem;border-radius:4px;font-weight:700;font-size:.75rem">CARTÃO</span>
+                <span id="card-installment-text">Em até 12x sem juros</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:.75rem;font-size:.85rem">
+                <span style="background:#475569;color:white;padding:.2rem .5rem;border-radius:4px;font-weight:700;font-size:.75rem">BOLETO</span>
+                <span>Vencimento em 3 dias úteis</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── DESCRIÇÃO ─── -->
+    <div class="card" style="margin-top:2rem">
+      <div class="card-header">
+        <div class="tabs" style="border:none;margin:0">
+          <button class="tab-btn active" onclick="switchTab('desc', this)">Descrição</button>
+          <button class="tab-btn" onclick="switchTab('specs', this)">Especificações</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="tab-desc" class="tab-panel active">
+          <p id="product-description" style="line-height:1.8;color:var(--gray-600)"></p>
+        </div>
+        <div id="tab-specs" class="tab-panel">
+          <div id="product-specs" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PRODUTOS RELACIONADOS ─── -->
+    <div style="margin-top:3rem">
+      <h2 class="section-title" style="margin-bottom:1.5rem">Produtos <span>Relacionados</span></h2>
+      <div class="products-grid" id="related-products"></div>
+    </div>
+  </div>
+
+  <div id="product-error" class="hidden" style="text-align:center;padding:4rem">
+    <div style="font-size:3rem;margin-bottom:1rem">😕</div>
+    <h3>Produto não encontrado</h3>
+    <p class="text-muted">O produto que você procura não existe ou foi removido.</p>
+    <a href="/loja" class="btn btn-primary" style="margin-top:1rem">Ver Loja</a>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+  let currentProduct = null;
+  let qty = 1;
+
+  function toggleUserDropdown() {
+    const d = document.getElementById('user-dropdown');
+    d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  }
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('nav-user-menu');
+    const dropdown = document.getElementById('user-dropdown');
+    if (menu && dropdown && !menu.contains(e.target)) dropdown.style.display = 'none';
+  });
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function changeQty(delta) {
+    if (!currentProduct) return;
+    qty = Math.max(1, Math.min(qty + delta, currentProduct.stock || 99));
+    document.getElementById('qty-value').textContent = qty;
+  }
+
+  function addToCart() {
+    if (!currentProduct) return;
+    cart.add(currentProduct, qty);
+  }
+
+  function buyNow() {
+    if (!currentProduct) return;
+    cart.add(currentProduct, qty);
+  }
+
+  async function loadProduct() {
+    const slug = window.location.pathname.split('/produto/')[1];
+    if (!slug) { showError(); return; }
+
+    try {
+      const p = await api.get(`/products/${slug}`);
+      currentProduct = p;
+
+      document.title = `${p.name} - Dux Imports`;
+      document.getElementById('breadcrumb-product').textContent = p.name.substring(0, 40) + (p.name.length > 40 ? '...' : '');
+
+      document.getElementById('main-product-img').src = p.image_url || 'https://via.placeholder.com/500?text=Produto';
+      document.getElementById('main-product-img').alt = p.name;
+      document.getElementById('product-name').textContent = p.name;
+      document.getElementById('product-brand').textContent = p.brand ? `🏷 ${p.brand}` : '';
+      document.getElementById('product-description').textContent = p.description || 'Sem descrição disponível.';
+
+      // Preços
+      const price = p.price;
+      const pixPrice = price * 0.95;
+      const installment = price / 12;
+      document.getElementById('product-price').textContent = fmt.currency(price);
+      document.getElementById('product-pix-price').textContent = `💰 PIX: ${fmt.currency(pixPrice)} (5% off)`;
+      document.getElementById('product-installment').textContent = `ou 12x de ${fmt.currency(installment)} sem juros`;
+      document.getElementById('card-installment-text').textContent = `Em até 12x de ${fmt.currency(installment)} sem juros`;
+
+      if (p.original_price && p.original_price > price) {
+        const disc = Math.round((1 - price / p.original_price) * 100);
+        document.getElementById('product-original-price').textContent = fmt.currency(p.original_price);
+        document.getElementById('product-original-price').style.display = 'inline';
+        document.getElementById('product-discount-badge').textContent = `-${disc}%`;
+        document.getElementById('product-discount-badge').style.display = 'inline';
+      }
+
+      // Estoque
+      const dot = document.getElementById('stock-dot');
+      const stockText = document.getElementById('stock-text');
+      if (p.stock > 5) {
+        dot.className = 'stock-dot stock-ok';
+        stockText.textContent = `Em estoque (${p.stock} unidades)`;
+      } else if (p.stock > 0) {
+        dot.className = 'stock-dot stock-low';
+        stockText.textContent = `Últimas ${p.stock} unidades!`;
+      } else {
+        dot.className = 'stock-dot stock-out';
+        stockText.textContent = 'Fora de estoque';
+        document.getElementById('add-to-cart-btn').disabled = true;
+      }
+
+      // Specs
+      const specs = [
+        ['SKU', p.sku], ['Marca', p.brand], ['Categoria', p.category_name],
+        ['Estoque', p.stock + ' un.'], ['Peso', p.weight ? p.weight + ' kg' : 'N/A']
+      ].filter(s => s[1]);
+      document.getElementById('product-specs').innerHTML = specs.map(([k, v]) => `
+        <div style="background:var(--gray-50);border-radius:var(--radius);padding:.75rem">
+          <div style="font-size:.75rem;color:var(--gray-500);font-weight:600;text-transform:uppercase;margin-bottom:.25rem">${k}</div>
+          <div style="font-size:.9rem;font-weight:600">${v}</div>
+        </div>`).join('');
+
+      // Relacionados
+      if (p.related && p.related.length > 0) {
+        document.getElementById('related-products').innerHTML = p.related.map(r => {
+          const d = r.original_price && r.original_price > r.price ? Math.round((1 - r.price / r.original_price) * 100) : null;
+          return `<div class="product-card">
+            <div class="product-card-image">
+              <a href="/produto/${r.slug}"><img src="${r.image_url || 'https://via.placeholder.com/300x225'}" alt="${r.name}" loading="lazy"></a>
+              ${d ? `<span class="product-badge badge-sale">-${d}%</span>` : ''}
+            </div>
+            <div class="product-card-body">
+              <a href="/produto/${r.slug}" class="product-name">${r.name}</a>
+              <div class="product-price-group"><span class="product-price">${fmt.currency(r.price)}</span></div>
+            </div>
+            <div class="product-card-footer">
+              <button class="btn btn-primary btn-sm btn-block" onclick='cart.add(${JSON.stringify(r)}, 1)'><i class="fas fa-cart-plus"></i> Adicionar</button>
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+      document.getElementById('product-loading').classList.add('hidden');
+      document.getElementById('product-content').classList.remove('hidden');
+
+    } catch (e) {
+      showError();
+    }
+  }
+
+  function showError() {
+    document.getElementById('product-loading').classList.add('hidden');
+    document.getElementById('product-error').classList.remove('hidden');
+  }
+
+  loadProduct();
+</script>
+</body>
+</html>

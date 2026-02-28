@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Dux Imports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .admin-login-card { background: white; border-radius: var(--radius-xl); padding: 2.5rem; max-width: 420px; width: 100%; box-shadow: var(--shadow-xl); }
+    .admin-badge { background: var(--primary); color: white; border-radius: var(--radius-full); padding: .3rem .9rem; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; display: inline-block; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+<div class="admin-login-card">
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="width:64px;height:64px;background:var(--primary);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:white">
+      <i class="fas fa-shield-alt"></i>
+    </div>
+    <div class="admin-badge">Painel Administrativo</div>
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.25rem">Dux Imports Admin</h2>
+    <p style="color:var(--gray-500);font-size:.88rem">Acesso restrito a administradores</p>
+  </div>
+
+  <div id="error-alert" class="alert alert-danger hidden"></div>
+
+  <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+    <div class="form-group">
+      <label class="form-label">Usuário</label>
+      <div style="position:relative">
+        <input type="text" class="form-control" id="username" placeholder="admin" required autofocus style="padding-left:2.5rem">
+        <i class="fas fa-user" style="position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--gray-400)"></i>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <div style="position:relative">
+        <input type="password" class="form-control" id="password" placeholder="••••••••" required style="padding-left:2.5rem;padding-right:2.5rem">
+        <i class="fas fa-lock" style="position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--gray-400)"></i>
+        <button type="button" onclick="togglePwd()" style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--gray-400);cursor:pointer">
+          <i class="fas fa-eye" id="eye-icon"></i>
+        </button>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block" id="login-btn">
+      <i class="fas fa-sign-in-alt"></i> Entrar no Painel
+    </button>
+  </form>
+
+  <p style="text-align:center;font-size:.78rem;color:var(--gray-400);margin-top:1.5rem">
+    <a href="/" style="color:var(--gray-400)">← Voltar à loja</a>
+  </p>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+  if (auth.isAdmin()) window.location.href = '/admin';
+
+  function togglePwd() {
+    const input = document.getElementById('password');
+    const icon = document.getElementById('eye-icon');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+  }
+
+  async function handleAdminLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errorAlert = document.getElementById('error-alert');
+    errorAlert.classList.add('hidden');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner spinner-sm" style="border-color:rgba(255,255,255,.3);border-top-color:white;margin:0 auto"></div>';
+
+    try {
+      const data = await api.post('/auth/admin/login', {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+      });
+      auth.adminLogin(data.token, data.admin);
+      toast.success(`Bem-vindo, ${data.admin.name}!`);
+      setTimeout(() => window.location.href = '/admin', 500);
+    } catch (err) {
+      errorAlert.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${err.message}`;
+      errorAlert.classList.remove('hidden');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Painel';
+    }
+  }
+</script>
+</body>
+</html>

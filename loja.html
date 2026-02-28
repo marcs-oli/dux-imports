@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loja - Dux Imports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .shop-layout { display: grid; grid-template-columns: 260px 1fr; gap: 2rem; align-items: start; }
+    .sort-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .sort-bar select { padding: .5rem .9rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius); font-size: .85rem; color: var(--gray-700); outline: none; cursor: pointer; }
+    .results-count { font-size: .88rem; color: var(--gray-500); }
+    .price-range { display: flex; gap: .5rem; align-items: center; }
+    .price-range input { width: 80px; padding: .4rem .6rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: .82rem; outline: none; }
+    .price-range input:focus { border-color: var(--primary); }
+    .filter-mobile-btn { display: none; }
+    @media (max-width: 768px) {
+      .shop-layout { grid-template-columns: 1fr; }
+      .filter-sidebar { display: none; }
+      .filter-sidebar.show { display: block; }
+      .filter-mobile-btn { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="navbar-brand">
+        <div class="brand-icon"><i class="fas fa-bolt"></i></div>
+        <span>Dux <em>Imports</em></span>
+      </a>
+      <div class="navbar-search">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="navbar-search" placeholder="Buscar produtos, marcas...">
+        <div class="search-results-dropdown" id="search-dropdown"></div>
+      </div>
+      <div class="navbar-actions">
+        <a href="/loja" class="nav-btn active"><i class="fas fa-store"></i><span>Loja</span></a>
+        <div id="nav-login-btn"><a href="/login" class="nav-btn"><i class="fas fa-user"></i><span>Entrar</span></a></div>
+        <div id="nav-user-menu" class="hidden" style="position:relative;">
+          <button class="nav-btn" onclick="toggleUserDropdown()">
+            <i class="fas fa-user-circle"></i><span id="nav-user-name">Usuário</span><i class="fas fa-chevron-down" style="font-size:.7rem"></i>
+          </button>
+          <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.12);min-width:180px;z-index:100;overflow:hidden;">
+            <a href="/conta" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#334155"><i class="fas fa-user" style="color:#1a56db;width:16px"></i> Minha Conta</a>
+            <a href="/pedidos" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#334155"><i class="fas fa-box" style="color:#1a56db;width:16px"></i> Meus Pedidos</a>
+            <hr style="margin:0;border-color:#f1f5f9">
+            <button id="nav-logout-btn" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#ef4444;width:100%;border:none;background:none;cursor:pointer"><i class="fas fa-sign-out-alt" style="width:16px"></i> Sair</button>
+          </div>
+        </div>
+        <a href="/carrinho" class="nav-btn nav-btn-cart" style="position:relative">
+          <i class="fas fa-shopping-cart"></i><span>Carrinho</span>
+          <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── CONTEÚDO ─── -->
+<div class="container" style="padding-top:2rem;padding-bottom:4rem">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="/">Início</a>
+    <span class="breadcrumb-sep">/</span>
+    <span id="breadcrumb-current">Loja</span>
+  </div>
+
+  <!-- Título da página -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+    <div>
+      <h1 id="page-title" style="font-size:1.75rem">Todos os Produtos</h1>
+      <p class="text-muted" id="page-subtitle">Explore nossa seleção completa</p>
+    </div>
+    <button class="btn btn-outline filter-mobile-btn" onclick="toggleMobileFilter()">
+      <i class="fas fa-filter"></i> Filtros
+    </button>
+  </div>
+
+  <div class="shop-layout">
+    <!-- ─── SIDEBAR FILTROS ─── -->
+    <aside class="filter-sidebar" id="filter-sidebar">
+      <div class="filter-group">
+        <div class="filter-title">Categorias</div>
+        <div id="filter-categories">
+          <div class="skeleton" style="height:200px"></div>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-title">Faixa de Preço</div>
+        <div class="price-range" style="margin-bottom:.75rem">
+          <input type="number" id="min-price" placeholder="Mín" min="0">
+          <span style="color:var(--gray-400)">—</span>
+          <input type="number" id="max-price" placeholder="Máx" min="0">
+        </div>
+        <button class="btn btn-primary btn-sm btn-block" onclick="applyPriceFilter()">
+          Aplicar
+        </button>
+      </div>
+
+      <div class="filter-group">
+        <div class="filter-title">Ordenar por</div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          <label class="filter-option"><input type="radio" name="sort" value="created_at-DESC" onchange="applySort(this)"> Mais recentes</label>
+          <label class="filter-option"><input type="radio" name="sort" value="price-ASC" onchange="applySort(this)"> Menor preço</label>
+          <label class="filter-option"><input type="radio" name="sort" value="price-DESC" onchange="applySort(this)"> Maior preço</label>
+          <label class="filter-option"><input type="radio" name="sort" value="name-ASC" onchange="applySort(this)"> A-Z</label>
+        </div>
+      </div>
+
+      <button class="btn btn-outline btn-sm btn-block" onclick="clearFilters()">
+        <i class="fas fa-times"></i> Limpar Filtros
+      </button>
+    </aside>
+
+    <!-- ─── PRODUTOS ─── -->
+    <main>
+      <div class="sort-bar">
+        <span class="results-count" id="results-count">Carregando...</span>
+        <select id="sort-select" onchange="changeSortSelect(this)">
+          <option value="created_at-DESC">Mais recentes</option>
+          <option value="price-ASC">Menor preço</option>
+          <option value="price-DESC">Maior preço</option>
+          <option value="name-ASC">A-Z</option>
+        </select>
+      </div>
+
+      <div class="products-grid" id="products-grid">
+        <!-- Skeletons -->
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ─── FOOTER ─── -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom" style="border-top:none;padding-top:0">
+      <span>© 2024 Dux Imports. Todos os direitos reservados.</span>
+      <a href="/" style="color:var(--primary-light)">← Voltar ao início</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  let currentPage = 1;
+  let currentFilters = {
+    category: getQueryParam('category') || '',
+    search: getQueryParam('search') || '',
+    featured: getQueryParam('featured') || '',
+    sort: 'created_at',
+    order: 'DESC',
+    min_price: '',
+    max_price: ''
+  };
+
+  function toggleUserDropdown() {
+    const d = document.getElementById('user-dropdown');
+    d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  }
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('nav-user-menu');
+    const dropdown = document.getElementById('user-dropdown');
+    if (menu && dropdown && !menu.contains(e.target)) dropdown.style.display = 'none';
+  });
+
+  function toggleMobileFilter() {
+    document.getElementById('filter-sidebar').classList.toggle('show');
+  }
+
+  function renderProductCard(p) {
+    const discount = p.original_price && p.original_price > p.price
+      ? Math.round((1 - p.price / p.original_price) * 100) : null;
+    return `
+      <div class="product-card">
+        <div class="product-card-image">
+          <a href="/produto/${p.slug}">
+            <img src="${p.image_url || 'https://via.placeholder.com/300x225?text=Produto'}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x225?text=Produto'">
+          </a>
+          ${discount ? `<span class="product-badge badge-sale">-${discount}%</span>` : ''}
+          <div class="product-card-actions">
+            <button class="product-action-btn" onclick='cart.add(${JSON.stringify(p)}, 1)' title="Adicionar ao carrinho"><i class="fas fa-cart-plus"></i></button>
+            <a href="/produto/${p.slug}" class="product-action-btn" title="Ver produto"><i class="fas fa-eye"></i></a>
+          </div>
+        </div>
+        <div class="product-card-body">
+          <div class="product-category">${p.category_name || 'Produto'}</div>
+          <a href="/produto/${p.slug}" class="product-name">${p.name}</a>
+          <div class="product-price-group">
+            ${p.original_price && p.original_price > p.price ? `<span class="product-original-price">${fmt.currency(p.original_price)}</span>` : ''}
+            <span class="product-price">${fmt.currency(p.price)}</span>
+            ${discount ? `<span class="product-discount">-${discount}%</span>` : ''}
+          </div>
+        </div>
+        <div class="product-card-footer">
+          <button class="btn btn-primary btn-sm btn-block" onclick='cart.add(${JSON.stringify(p)}, 1)'>
+            <i class="fas fa-cart-plus"></i> Adicionar
+          </button>
+        </div>
+      </div>`;
+  }
+
+  async function loadProducts(page = 1) {
+    currentPage = page;
+    const grid = document.getElementById('products-grid');
+    grid.innerHTML = Array(8).fill('<div class="skeleton" style="height:340px;border-radius:16px"></div>').join('');
+
+    const params = new URLSearchParams({
+      page,
+      per_page: 12,
+      sort: currentFilters.sort,
+      order: currentFilters.order,
+      ...(currentFilters.category && { category: currentFilters.category }),
+      ...(currentFilters.search && { search: currentFilters.search }),
+      ...(currentFilters.featured && { featured: 1 }),
+      ...(currentFilters.min_price && { min_price: currentFilters.min_price }),
+      ...(currentFilters.max_price && { max_price: currentFilters.max_price }),
+    });
+
+    try {
+      const data = await api.get(`/products?${params}`);
+      const { products, total, pages } = data;
+
+      document.getElementById('results-count').textContent = `${total} produto${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}`;
+
+      if (products.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon">🔍</div>
+          <h3>Nenhum produto encontrado</h3>
+          <p>Tente outros filtros ou termos de busca.</p>
+          <button class="btn btn-primary" onclick="clearFilters()">Limpar Filtros</button>
+        </div>`;
+      } else {
+        grid.innerHTML = products.map(renderProductCard).join('');
+      }
+
+      renderPagination(page, pages);
+    } catch (e) {
+      grid.innerHTML = '<p class="text-muted">Erro ao carregar produtos.</p>';
+    }
+  }
+
+  function renderPagination(current, total) {
+    const el = document.getElementById('pagination');
+    if (total <= 1) { el.innerHTML = ''; return; }
+    let html = `<button class="page-btn" onclick="loadProducts(${current - 1})" ${current === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= current - 2 && i <= current + 2)) {
+        html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="loadProducts(${i})">${i}</button>`;
+      } else if (i === current - 3 || i === current + 3) {
+        html += `<span style="padding:0 .25rem;color:var(--gray-400)">...</span>`;
+      }
+    }
+    html += `<button class="page-btn" onclick="loadProducts(${current + 1})" ${current === total ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+    el.innerHTML = html;
+  }
+
+  async function loadFilterCategories() {
+    try {
+      const categories = await api.get('/categories');
+      const icons = { 'eletronicos': '📱', 'informatica': '💻', 'audio-video': '🎧', 'games': '🎮', 'cameras': '📷', 'acessorios': '🔌' };
+      document.getElementById('filter-categories').innerHTML =
+        `<div class="filter-option ${!currentFilters.category ? 'active' : ''}" onclick="setCategory('')">
+          <span>Todos</span>
+        </div>` +
+        categories.map(c => `
+          <div class="filter-option ${currentFilters.category === c.slug ? 'active' : ''}" onclick="setCategory('${c.slug}')">
+            ${icons[c.slug] || '📦'} ${c.name} <span style="margin-left:auto;color:var(--gray-400);font-size:.75rem">${c.product_count}</span>
+          </div>`).join('');
+    } catch {}
+  }
+
+  function setCategory(slug) {
+    currentFilters.category = slug;
+    currentFilters.featured = '';
+    updatePageTitle();
+    loadProducts(1);
+    loadFilterCategories();
+  }
+
+  function applySort(radio) {
+    const [sort, order] = radio.value.split('-');
+    currentFilters.sort = sort;
+    currentFilters.order = order;
+    loadProducts(1);
+  }
+
+  function changeSortSelect(sel) {
+    const [sort, order] = sel.value.split('-');
+    currentFilters.sort = sort;
+    currentFilters.order = order;
+    loadProducts(1);
+  }
+
+  function applyPriceFilter() {
+    currentFilters.min_price = document.getElementById('min-price').value;
+    currentFilters.max_price = document.getElementById('max-price').value;
+    loadProducts(1);
+  }
+
+  function clearFilters() {
+    currentFilters = { category: '', search: '', featured: '', sort: 'created_at', order: 'DESC', min_price: '', max_price: '' };
+    document.getElementById('min-price').value = '';
+    document.getElementById('max-price').value = '';
+    document.getElementById('sort-select').value = 'created_at-DESC';
+    updatePageTitle();
+    loadFilterCategories();
+    loadProducts(1);
+  }
+
+  function updatePageTitle() {
+    const titleEl = document.getElementById('page-title');
+    const subtitleEl = document.getElementById('page-subtitle');
+    const breadcrumb = document.getElementById('breadcrumb-current');
+    if (currentFilters.search) {
+      titleEl.textContent = `Resultados para "${currentFilters.search}"`;
+      subtitleEl.textContent = 'Produtos encontrados na busca';
+      breadcrumb.textContent = `Busca: ${currentFilters.search}`;
+    } else if (currentFilters.featured) {
+      titleEl.textContent = 'Produtos em Destaque';
+      subtitleEl.textContent = 'Nossa seleção especial';
+      breadcrumb.textContent = 'Destaques';
+    } else if (currentFilters.category) {
+      breadcrumb.textContent = currentFilters.category;
+    } else {
+      titleEl.textContent = 'Todos os Produtos';
+      subtitleEl.textContent = 'Explore nossa seleção completa';
+      breadcrumb.textContent = 'Loja';
+    }
+  }
+
+  // Inicializar
+  updatePageTitle();
+  loadFilterCategories();
+  loadProducts(1);
+</script>
+</body>
+</html>

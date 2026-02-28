@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrinho - Dux Imports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .cart-layout { display: grid; grid-template-columns: 1fr 360px; gap: 2rem; align-items: start; }
+    @media (max-width: 900px) { .cart-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="/" class="navbar-brand">
+        <div class="brand-icon"><i class="fas fa-bolt"></i></div>
+        <span>Dux <em>Imports</em></span>
+      </a>
+      <div class="navbar-search">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="navbar-search" placeholder="Buscar produtos...">
+        <div class="search-results-dropdown" id="search-dropdown"></div>
+      </div>
+      <div class="navbar-actions">
+        <a href="/loja" class="nav-btn"><i class="fas fa-store"></i><span>Loja</span></a>
+        <div id="nav-login-btn"><a href="/login" class="nav-btn"><i class="fas fa-user"></i><span>Entrar</span></a></div>
+        <div id="nav-user-menu" class="hidden" style="position:relative;">
+          <button class="nav-btn" onclick="toggleUserDropdown()">
+            <i class="fas fa-user-circle"></i><span id="nav-user-name">Usuário</span>
+          </button>
+          <div id="user-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.12);min-width:180px;z-index:100;overflow:hidden;">
+            <a href="/conta" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#334155"><i class="fas fa-user" style="color:#1a56db;width:16px"></i> Minha Conta</a>
+            <a href="/pedidos" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#334155"><i class="fas fa-box" style="color:#1a56db;width:16px"></i> Meus Pedidos</a>
+            <hr style="margin:0;border-color:#f1f5f9">
+            <button id="nav-logout-btn" style="display:flex;align-items:center;gap:.6rem;padding:.75rem 1rem;font-size:.85rem;color:#ef4444;width:100%;border:none;background:none;cursor:pointer"><i class="fas fa-sign-out-alt" style="width:16px"></i> Sair</button>
+          </div>
+        </div>
+        <a href="/carrinho" class="nav-btn nav-btn-cart active" style="position:relative">
+          <i class="fas fa-shopping-cart"></i><span>Carrinho</span>
+          <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── CONTEÚDO ─── -->
+<div class="container" style="padding-top:2rem;padding-bottom:4rem">
+  <div class="breadcrumb">
+    <a href="/">Início</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>Carrinho</span>
+  </div>
+
+  <h1 style="font-size:1.75rem;margin-bottom:2rem">
+    <i class="fas fa-shopping-cart" style="color:var(--primary)"></i>
+    Meu Carrinho <span id="cart-count-title" style="font-size:1rem;color:var(--gray-500);font-weight:500"></span>
+  </h1>
+
+  <!-- Carrinho vazio -->
+  <div id="cart-empty" class="hidden">
+    <div class="empty-state">
+      <div class="empty-state-icon">🛒</div>
+      <h3>Seu carrinho está vazio</h3>
+      <p>Adicione produtos para continuar comprando.</p>
+      <a href="/loja" class="btn btn-primary btn-lg">
+        <i class="fas fa-store"></i> Explorar Produtos
+      </a>
+    </div>
+  </div>
+
+  <!-- Itens do carrinho -->
+  <div id="cart-content" class="hidden">
+    <div class="cart-layout">
+      <!-- ─── ITENS ─── -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <span class="text-muted text-sm">Itens no carrinho</span>
+          <button class="btn btn-sm" style="color:var(--danger);border:none;background:none" onclick="clearCartConfirm()">
+            <i class="fas fa-trash"></i> Limpar carrinho
+          </button>
+        </div>
+        <div id="cart-items"></div>
+
+        <!-- Frete grátis progress -->
+        <div id="shipping-progress" class="card" style="margin-top:1rem">
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+              <span style="font-size:.85rem;font-weight:600">🚚 Frete Grátis</span>
+              <span id="shipping-remaining" style="font-size:.82rem;color:var(--gray-500)"></span>
+            </div>
+            <div style="height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden">
+              <div id="shipping-bar" style="height:100%;background:var(--primary);border-radius:3px;transition:width .5s ease"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── RESUMO ─── -->
+      <div class="order-summary">
+        <h3 style="font-size:1.1rem;margin-bottom:1.25rem">Resumo do Pedido</h3>
+
+        <div class="summary-row">
+          <span>Subtotal (<span id="summary-count">0</span> itens)</span>
+          <span id="summary-subtotal">R$ 0,00</span>
+        </div>
+        <div class="summary-row" id="shipping-row">
+          <span>Frete</span>
+          <span id="summary-shipping">Calculando...</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total</span>
+          <span id="summary-total">R$ 0,00</span>
+        </div>
+
+        <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.75rem">
+          <a href="/checkout" class="btn btn-primary btn-lg btn-block" id="checkout-btn">
+            <i class="fas fa-lock"></i> Finalizar Compra
+          </a>
+          <a href="/loja" class="btn btn-outline btn-block">
+            <i class="fas fa-arrow-left"></i> Continuar Comprando
+          </a>
+        </div>
+
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--gray-100)">
+          <p style="font-size:.78rem;color:var(--gray-500);text-align:center;display:flex;align-items:center;justify-content:center;gap:.4rem">
+            <i class="fas fa-lock" style="color:var(--success)"></i>
+            Pagamento 100% seguro e criptografado
+          </p>
+          <div style="display:flex;justify-content:center;gap:.5rem;margin-top:.75rem">
+            <span class="payment-icon" style="background:var(--gray-200);color:var(--gray-600)">PIX</span>
+            <span class="payment-icon" style="background:var(--gray-200);color:var(--gray-600)">VISA</span>
+            <span class="payment-icon" style="background:var(--gray-200);color:var(--gray-600)">MASTER</span>
+            <span class="payment-icon" style="background:var(--gray-200);color:var(--gray-600)">BOLETO</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+  function toggleUserDropdown() {
+    const d = document.getElementById('user-dropdown');
+    d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  }
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('nav-user-menu');
+    const dropdown = document.getElementById('user-dropdown');
+    if (menu && dropdown && !menu.contains(e.target)) dropdown.style.display = 'none';
+  });
+
+  function renderCart() {
+    const items = cart.getItems();
+    const empty = document.getElementById('cart-empty');
+    const content = document.getElementById('cart-content');
+
+    if (items.length === 0) {
+      empty.classList.remove('hidden');
+      content.classList.add('hidden');
+      return;
+    }
+
+    empty.classList.add('hidden');
+    content.classList.remove('hidden');
+
+    document.getElementById('cart-count-title').textContent = `(${items.length} ${items.length === 1 ? 'item' : 'itens'})`;
+
+    // Renderizar itens
+    document.getElementById('cart-items').innerHTML = items.map(item => `
+      <div class="cart-item" id="cart-item-${item.id}">
+        <img class="cart-item-img" src="${item.image_url || 'https://via.placeholder.com/80'}"
+             alt="${item.name}" onerror="this.src='https://via.placeholder.com/80'">
+        <div class="cart-item-info">
+          <a href="/produto/${item.slug}" class="cart-item-name">${item.name}</a>
+          <div class="cart-item-price">${fmt.currency(item.price)}</div>
+          <div style="font-size:.78rem;color:var(--gray-400)">Subtotal: ${fmt.currency(item.price * item.quantity)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.75rem">
+          <div class="qty-control">
+            <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity - 1})">−</button>
+            <span class="qty-value">${item.quantity}</span>
+            <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity + 1})">+</button>
+          </div>
+          <button onclick="removeItem(${item.id})" style="background:none;border:none;color:var(--danger);font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:.3rem">
+            <i class="fas fa-trash-alt"></i> Remover
+          </button>
+        </div>
+      </div>`).join('');
+
+    // Calcular totais
+    const subtotal = cart.getTotal();
+    const shipping = subtotal >= 299 ? 0 : 29.90;
+    const total = subtotal + shipping;
+
+    document.getElementById('summary-count').textContent = cart.getCount();
+    document.getElementById('summary-subtotal').textContent = fmt.currency(subtotal);
+    document.getElementById('summary-total').textContent = fmt.currency(total);
+
+    const shippingEl = document.getElementById('summary-shipping');
+    const shippingRow = document.getElementById('shipping-row');
+    if (shipping === 0) {
+      shippingEl.innerHTML = '<span style="color:var(--success);font-weight:600">Grátis!</span>';
+      shippingRow.classList.add('shipping-free');
+    } else {
+      shippingEl.textContent = fmt.currency(shipping);
+      shippingRow.classList.remove('shipping-free');
+    }
+
+    // Progress bar frete grátis
+    const progress = Math.min((subtotal / 299) * 100, 100);
+    document.getElementById('shipping-bar').style.width = `${progress}%`;
+    if (subtotal >= 299) {
+      document.getElementById('shipping-remaining').textContent = '✅ Frete grátis aplicado!';
+      document.getElementById('shipping-remaining').style.color = 'var(--success)';
+    } else {
+      const remaining = 299 - subtotal;
+      document.getElementById('shipping-remaining').textContent = `Faltam ${fmt.currency(remaining)} para frete grátis`;
+      document.getElementById('shipping-remaining').style.color = '';
+    }
+  }
+
+  function updateQty(id, qty) {
+    cart.updateQty(id, qty);
+    renderCart();
+  }
+
+  function removeItem(id) {
+    cart.remove(id);
+    renderCart();
+    toast.info('Item removido do carrinho');
+  }
+
+  function clearCartConfirm() {
+    if (confirm('Tem certeza que deseja limpar o carrinho?')) {
+      cart.clear();
+      renderCart();
+      toast.info('Carrinho limpo');
+    }
+  }
+
+  // Atualizar ao receber evento
+  window.addEventListener('cartUpdated', renderCart);
+
+  renderCart();
+</script>
+</body>
+</html>
