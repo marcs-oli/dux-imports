@@ -106,13 +106,4 @@ def missing_token_callback(error):
 
 # ─── INICIALIZAÇÃO ────────────────────────────────────────────────────────────
 
-if __name__ == '__main__':
-    print("=" * 60)
-    print("  🛒 DUX IMPORTS - Sistema de E-commerce")
-    print("=" * 60)
-    print("  Inicializando banco de dados...")
-    init_db()
-    print("  Servidor iniciando em http://localhost:5000")
-    print("  Admin: login=admin | senha=admin123")
-    print("=" * 60)
-    app.run(debug=True, host='0.0.0.0', port=5000)
+if __name__ == '__main__': app.run
